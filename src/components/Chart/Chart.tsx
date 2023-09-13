@@ -1,56 +1,63 @@
-import { Component } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { styled } from 'styled-components';
+import { Component } from 'react';
+import { FilterTypes } from '../../pages/Home/Home';
 
 interface ChartStates {
   series: any[];
   options: any;
 }
 
+interface Values {
+  id: string;
+  value_area: number;
+  value_bar: number;
+}
+
 interface ChartProps {
-  categories: string[];
-  areaDataList: number[];
-  barDataList: number[];
+  seletedFilter: FilterTypes;
+  values: Values[];
+  timeSeries: string[];
+}
+
+interface TooltipProps {
+  dataPointIndex: number;
 }
 
 class ApexChart extends Component<ChartProps, ChartStates> {
   constructor(props: ChartProps) {
     super(props);
 
-    const cetegories = this.props.categories;
-    const areaDataList = this.props.areaDataList;
-    const barDataList = this.props.barDataList;
+    const values = this.props.values;
+    const timeSeries = this.props.timeSeries;
+
+    const areaDataList = values.map((el) => el['value_area']);
+    const barDataList = values.map((el) => el['value_bar']);
+    const idDataList = values.map((el) => el['id']);
 
     this.state = {
       series: [
-        {
-          name: 'Area',
-          type: 'area',
-          data: areaDataList,
-        },
-        {
-          name: 'Bar',
-          type: 'column',
-          data: barDataList,
-        },
+        { name: 'Area', type: 'area', data: areaDataList },
+        { name: 'Bar', type: 'column', data: barDataList },
       ],
       options: {
-        chart: {
-          type: 'line',
-          stacked: true,
-        },
-        dataLabels: {
-          enabled: false,
-        },
         stroke: {
           width: [1, 1],
         },
         title: {
-          text: '시계열 차트',
+          text: 'Time Series Chart',
           align: 'center',
+          style: { fontSize: '30px' },
         },
         xaxis: {
-          categories: cetegories,
+          categories: timeSeries,
+          title: {
+            text: '2023-02-01일자',
+            style: {
+              fontSize: '16px',
+              fontWeight: 800,
+            },
+          },
         },
         yaxis: [
           {
@@ -58,6 +65,8 @@ class ApexChart extends Component<ChartProps, ChartStates> {
             axisTicks: {
               show: true,
             },
+            min: 0,
+            max: 200,
             axisBorder: {
               show: true,
               color: '#008FFB',
@@ -72,9 +81,6 @@ class ApexChart extends Component<ChartProps, ChartStates> {
               style: {
                 color: '#008FFB',
               },
-            },
-            tooltip: {
-              enabled: true,
             },
           },
           {
@@ -100,17 +106,23 @@ class ApexChart extends Component<ChartProps, ChartStates> {
             },
           },
         ],
+        legend: { horizontalAlign: 'center' },
         tooltip: {
-          fixed: {
-            enabled: true,
-            position: 'topLeft',
-            offsetY: 60,
-            offsetX: 80,
+          custom: function ({ dataPointIndex }: TooltipProps) {
+            const id = idDataList[dataPointIndex];
+            const areaData = areaDataList[dataPointIndex];
+            const barData = barDataList[dataPointIndex];
+
+            const customTooltip = `
+              <div class="custom-tooltip">
+                <span>Id: ${id}</span><br>
+                <span>Area: ${areaData}</span><br>
+                <span>Bar: ${barData}</span><br>
+              </div>
+            `;
+
+            return customTooltip;
           },
-        },
-        legend: {
-          horizontalAlign: 'center',
-          offsetX: 40,
         },
       },
     };
@@ -122,9 +134,6 @@ class ApexChart extends Component<ChartProps, ChartStates> {
         <ReactApexChart
           options={this.state.options}
           series={this.state.series}
-          type="line"
-          height="100%"
-          width="100%"
         />
       </StyledChart>
     );
@@ -134,6 +143,7 @@ class ApexChart extends Component<ChartProps, ChartStates> {
 export default ApexChart;
 
 const StyledChart = styled.div`
-  width: 100vw;
-  height: 100vh;
+  .custom-tooltip {
+    padding: 8px 15px;
+  }
 `;
